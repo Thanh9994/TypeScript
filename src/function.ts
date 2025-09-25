@@ -1,4 +1,4 @@
-function sum(): number {
+function sumFixed(): number {
     let a = 10, b = 20, c = 30;
     return a + b + c;
 };
@@ -8,7 +8,7 @@ const sumArray = (): number => {
     return a + b + c;
 };
 
-console.log("Function: ", sum());
+console.log("Function: ", sumFixed());
 console.log("Function Arrow: ", sumArray(), ".");
 
 const sumDefault = (a: number, b: number = 0): number => a + b;
@@ -44,9 +44,43 @@ const mergedSothich = [...sothich, ...activeSothich];
 console.log("Sau khi merge mảng sothich:", mergedSothich);
 
 
-let sum = (x: number = 5, y?: number): number => {return x + <number>y;};
+let sum = (x: number = 5, y?: number): number => {
+    return x + (y ?? 0);
+};
 let speech = (output: any): void =>{
     console.log("result: ", output);
 }
-speech(sum(10, 20));
+speech(sum());
+speech(sum(10));
+speech(sum(5, 12));
+
 console.log("result: ", sum(10, 20));
+
+let something: void = undefined;
+// something = 1; //ERORR
+// something = "hello"; //ERORR
+// something = null; //ERORR
+// something = {}; //ERORR
+// something = []; //ERORR
+let nothing: null = null;
+// nothing = 1; //ERORR
+// nothing = "hello"; //ERORR
+// nothing = undefined; //ERORR
+// nothing = {}; //ERORR
+// nothing = []; //ERORR
+function throwError(message: string): never {
+    throw new Error(message);
+}
+// throwError("Something went wrong");
+// console.log("after throw");
+// let result = throwError("Something went wrong");
+// console.log("after throw", result);
+
+function AddandHandle(num1: number, num2: number, cb: (num: number) => void): void {
+    const result = num1 + num2;
+    cb(result);
+}
+
+AddandHandle(10, 20, (result) => {
+    console.log("result from callback: ", result);
+});
