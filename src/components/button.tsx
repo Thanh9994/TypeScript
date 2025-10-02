@@ -10,6 +10,6 @@ const Button = ({ label, onClick, color = "white" }: ButtonProps) => {
       {label}
     </button>
   );
-};
+}; 
 
 export default Button;
