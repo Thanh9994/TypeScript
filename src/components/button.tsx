@@ -12,4 +12,6 @@ const Button = ({ label, onClick, color = "white" }: ButtonProps) => {
   );
 }; 
 
+//new
+
 export default Button;
