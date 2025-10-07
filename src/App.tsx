@@ -1,10 +1,12 @@
 import { Toaster } from 'react-hot-toast'
+import UsersList from './components/User'
 
 function App() {
 
   return (
     <>
-      <Toaster/>
+      <UsersList />
+      <Toaster />
     </>
   )
 }
