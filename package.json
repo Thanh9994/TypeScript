@@ -4,7 +4,7 @@
   "scripts": {
     "dev:server": "pnpm --filter backdb run dev",
     "dev:client": "pnpm --filter clientapp run dev",
-    "start": "concurrently -k -n SERVER,CLIENT -c green,cyan \"pnpm run dev:server\" \"pnpm run dev:client\""
+    "start": "concurrently -k -n DB,APP -c white,magenta \"pnpm run dev:server\" \"pnpm run dev:client\""
   },
   "pnpm": {
     "overrides": {
