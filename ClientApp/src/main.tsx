@@ -5,6 +5,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { BrowserRouter } from 'react-router-dom'
 import './styles/main.css'
 import App from './App.tsx'
+import "antd/dist/reset.css"; 
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

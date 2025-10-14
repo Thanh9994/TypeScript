@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import {connectDB} from "./config/db";
 import productRoutes from "./routes/products.routes";
+import userRoutes from "./routes/user.routes"
 
 dotenv.config();
 
@@ -13,8 +14,13 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes)
 
 app.get("/", (_req, res) => res.json({ message: "Products API 🚀" }));
+// import { Request } from "express";
+
+// const testReq: Request = {} as Request;
+// testReq.user; // Nếu không báo lỗi, nghĩa là TS đã nhận type
 
 const PORT = Number(process.env.PORT || 4000);
 const MONGO_URI = process.env.MONGO_URI;

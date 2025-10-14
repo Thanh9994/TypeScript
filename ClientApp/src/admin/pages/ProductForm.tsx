@@ -42,7 +42,7 @@ export default function ProductForm() {
     try {
       if (isEdit) {
         await http.put(`/products/${id}`, form);
-        alert("Cập nhật sản phẩm thành công.");
+        alert("Cập nhật sản phẩm thành công.");   
       } else {
         await http.post("/products", form);
         alert("Thêm sản phẩm thành công.");

@@ -5,6 +5,8 @@ import type { Product } from "../../types/product";
 import Loading from "../../shared/Components/loading";
 import { vnd } from "../../untils/currency";
 import ProductStatus from "../../types/PorductStatus";
+import { Table, Button, Space, message, Modal, Tag } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 type ContextType = {
   search: string;
@@ -16,12 +18,31 @@ export default function ProductsAdmin() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
-  // Reset trang khi search thay đổi
+  // ✅ reset trang khi search thay đổi
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
+
+  // ✅ tải dữ liệu sản phẩm
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await http.get<Product[]>("/products");
+        if (!ignore) setData(res.data ?? []);
+      } catch (e: any) {
+        if (!ignore)
+          setErr(e?.response?.data?.message ?? "Không thể tải danh sách sản phẩm");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const filteredData = data.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -38,37 +59,33 @@ export default function ProductsAdmin() {
     setCurrentPage(page);
   };
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await http.get<Product[]>("/products");
-        if (mounted) setData(res.data ?? []);
-      } catch (e: any) {
-        if (mounted)
-          setErr(e?.response?.data?.message ?? "Không thể tải sản phẩm");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
+  // ✅ Xóa sản phẩm với Modal.confirm
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
-    try {
-      await http.delete(`/products/${id}`);
-      setData((prev) => prev.filter((p) => p._id !== id));
-      alert("Xóa sản phẩm thành công.");
-    } catch (e) {
-      alert("Xóa sản phẩm thất bại. Vui lòng thử lại.");
-    }
+    Modal.confirm({
+      title: "Bạn có chắc muốn xóa sản phẩm này?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okButtonProps: { danger: true },
+      async onOk() {
+        try {
+          await http.delete(`/products/${id}`);
+          setData((prev) => prev.filter((p) => p._id !== id));
+          message.success("Đã xóa sản phẩm thành công");
+        } catch (e: any) {
+          message.error("Xóa sản phẩm thất bại. Vui lòng thử lại.");
+        }
+      },
+    });
   };
 
   if (loading) return <Loading />;
-  if (err) return <div className="alert alert-danger my-3">{err}</div>;
+  if (err)
+    return (
+      <div className="alert alert-danger my-3 text-center fw-semibold">
+        {err}
+      </div>
+    );
   if (!filteredData.length)
     return (
       <>
@@ -79,87 +96,98 @@ export default function ProductsAdmin() {
 
   return (
     <>
-      <h2 className="mb-3">Sản phẩm</h2>
+      <h2 className="mb-3">Danh sách sản phẩm</h2>
 
-      <div className="table-responsive">
-        <table className="table table-bordered table-hover align-middle text-center">
-          <thead className="table-dark">
-            <tr>
-              <th>STT</th>
-              <th>Tên sản phẩm</th>
-              <th>Giá</th>
-              <th>Danh mục</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((p, index) => (
-              <tr key={p._id}>
-                <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                <td>{p.name}</td>
-                <td className="text-primary fw-semibold">{vnd(p.price)}</td>
-                <td>{p.category}</td>
-                <td>
-                  <ProductStatus status={p.status} />
-                </td>
-                <td>
-                  <Link
-                    to={`/products/${p._id}`}
-                    className="btn btn-sm btn-outline-primary me-1"
-                  >
-                    Xem
-                  </Link>
-                  <Link
-                    to={`/admin/products/${p._id}/edit`}
-                    className="btn btn-sm btn-warning me-1"
-                  >
-                    Sửa
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(p._id)}
-                    className="btn btn-sm btn-danger"
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table
+        bordered
+        pagination={false}
+        rowKey="_id"
+        dataSource={paginatedData}
+        columns={[
+          {
+            title: "STT",
+            render: (_: any, __: any, index: number) =>
+              (currentPage - 1) * itemsPerPage + index + 1,
+            width: 80,
+            align: "center",
+          },
+          { title: "Tên sản phẩm", dataIndex: "name" },
+          {
+            title: "Giá",
+            dataIndex: "price",
+            render: (price: number) => (
+              <span className="text-primary fw-semibold">{vnd(price)}</span>
+            ),
+          },
+          {
+            title: "Danh mục",
+            dataIndex: "category",
+          },
+          {
+            title: "Trạng thái",
+            dataIndex: "status",
+            render: (_: any, record: Product) => <ProductStatus status={record.status ?? "unknown"} />,
+          },
+          {
+            title: "Hành động",
+            render: (_: any, record: Product) => (
+              <Space>
+                <Link
+                  to={`/products/${record._id}`}
+                  className="btn btn-sm btn-outline-primary"
+                >
+                  Xem
+                </Link>
+                <Link
+                  to={`/admin/products/${record._id}/edit`}
+                  className="btn btn-sm btn-warning"
+                >
+                  Sửa
+                </Link>
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => handleDelete(record._id)}
+                >
+                  Xóa
+                </Button>
+              </Space>
+            ),
+          },
+        ]}
+      />
 
+      {/* Phân trang */}
       <div className="d-flex justify-content-center mt-3 gap-2">
-        <button
-          className="btn btn-outline-secondary btn-sm"
+        <Button
+          size="small"
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 1}
         >
           Trang trước
-        </button>
+        </Button>
 
         {Array.from({ length: totalPages }).map((_, i) => {
           const page = i + 1;
           return (
-            <button
+            <Button
               key={page}
-              className={`btn btn-sm ${
-                page === currentPage ? "btn-primary" : "btn-outline-primary"
-              }`}
+              type={page === currentPage ? "primary" : "default"}
+              size="small"
               onClick={() => goToPage(page)}
             >
               {page}
-            </button>
+            </Button>
           );
         })}
 
-        <button
-          className="btn btn-outline-secondary btn-sm"
+        <Button
+          size="small"
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
           Trang sau
-        </button>
+        </Button>
       </div>
 
       <hr className="my-4" />

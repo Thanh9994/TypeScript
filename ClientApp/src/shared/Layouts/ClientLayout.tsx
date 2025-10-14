@@ -9,6 +9,8 @@ export default function ClientLayout() {
           <Link to="/" className="navbar-brand">Shop</Link>
           <div className="navbar-nav">
             <Link to="/products" className="nav-link">Sản phẩm</Link>
+            <Link to="/login" className="nav-link">Đăng nhập</Link>
+            <Link to="/register" className="nav-link">Đăng Ký</Link>
           </div>
         </div>
       </nav>
