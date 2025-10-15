@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { http } from "../../api/http";
-import type { Product } from "../../types/product";
 import Loading from "../../shared/Components/loading";
 import { vnd } from "../../untils/currency";
 import ProductStatus from "../../types/PorductStatus";
-import { Table, Button, Space, message, Modal, Tag } from "antd";
+import { Table, Button, Space, message, Modal } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import type { Category, Product } from "../../types/interface";
 
 type ContextType = {
   search: string;
@@ -14,11 +14,13 @@ type ContextType = {
 
 export default function ProductsAdmin() {
   const { search } = useOutletContext<ContextType>();
+  const navigate = useNavigate();
   const [data, setData] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 15;
 
   // ✅ reset trang khi search thay đổi
   useEffect(() => {
@@ -30,8 +32,14 @@ export default function ProductsAdmin() {
     let ignore = false;
     (async () => {
       try {
-        const res = await http.get<Product[]>("/products");
-        if (!ignore) setData(res.data ?? []);
+        const [resP ,resC] = await Promise.all([
+          http.get<Product[]>("/products"),
+          http.get<Category[]>("/categories"),
+        ]);
+          setData(resP.data ?? []);
+          setCategories(resC.data ?? []);
+          console.log("products:", resP.data);
+          console.log("categories:", resC.data);
       } catch (e: any) {
         if (!ignore)
           setErr(e?.response?.data?.message ?? "Không thể tải danh sách sản phẩm");
@@ -98,6 +106,14 @@ export default function ProductsAdmin() {
     <>
       <h2 className="mb-3">Danh sách sản phẩm</h2>
 
+      <Button
+        type="primary"
+        className="my-3"
+        onClick={() => navigate("/admin/products/new")}
+      >
+        + Thêm sản phẩm
+      </Button>
+
       <Table
         bordered
         pagination={false}
@@ -122,6 +138,10 @@ export default function ProductsAdmin() {
           {
             title: "Danh mục",
             dataIndex: "category",
+            render: (category) => {
+              if (!category) return "Không rõ";
+              return category.name ?? "Không rõ";
+            },
           },
           {
             title: "Trạng thái",
@@ -189,12 +209,6 @@ export default function ProductsAdmin() {
           Trang sau
         </Button>
       </div>
-
-      <hr className="my-4" />
-
-      <Link to="/admin/products/new" className="btn btn-primary">
-        + Thêm sản phẩm
-      </Link>
     </>
   );
 }

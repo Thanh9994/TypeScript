@@ -1,14 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import type {Product} from "../../types/product";
 import { useEffect, useState } from "react";
 import { http } from "../../api/http";
+import { message } from "antd"
+import { productSchema, type ProductFormData } from "../../shared/Schema/auth.schema";
+import type { Category, Product } from "../../types/interface";
 
 export default function ProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = Boolean(id);
 
-  const [form, setForm] = useState<Omit<Product, "_id">>({
+  const [form, setForm] = useState<ProductFormData>({
     name: "",
     price: 0,
     category: "",
@@ -16,6 +18,12 @@ export default function ProductForm() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    http.get("/categories").then((res) => setCategories(res.data));
+  }, []);
+
 
   useEffect(() => {
     if (isEdit && id) {
@@ -25,7 +33,10 @@ export default function ProductForm() {
           setForm({
             name: res.data.name,
             price: res.data.price,
-            category: res.data.category,
+            category:
+            typeof res.data.category === "string"
+              ? res.data.category
+              : res.data.category._id ?? "",
             status: res.data.status,
           });
         } catch (e: any) {
@@ -39,14 +50,31 @@ export default function ProductForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    const result = productSchema.safeParse(form);
+    if(!result.success){
+      const firstError = result.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+      setError(firstError);
+      setLoading(false)
+      return;
+    }
+     // Nếu cần gửi category là object, tìm object category theo id
+    const categoryObject = categories.find(cat => cat._id === result.data.category);
+
+    const payload = {
+      ...result.data,
+      category: categoryObject ?? result.data.category // nếu ko tìm thấy thì giữ nguyên
+    };
+
     try {
       if (isEdit) {
-        await http.put(`/products/${id}`, form);
-        alert("Cập nhật sản phẩm thành công.");   
+        await http.put(`/products/${id}`, payload);
+        message.success("Cập nhật sản phẩm thành công.");   
       } else {
-        await http.post("/products", form);
-        alert("Thêm sản phẩm thành công.");
+        await http.post("/products", payload);
+        message.success("Thêm sản phẩm thành công.");
       }
+      console.log("🧾 Dữ liệu gửi lên:", payload);
       navigate("/admin/products");
     } catch (e: any) {
       setError(e?.response?.data?.message ?? "Lưu sản phẩm thất bại. Vui lòng thử lại.");
@@ -59,14 +87,14 @@ export default function ProductForm() {
     <>
       <h2 className="mb-3">{isEdit ? "Chỉnh sửa" : "Thêm"} sản phẩm</h2>
       {error && <div className="alert alert-danger my-3">{error}</div>}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="mb-3">
           <label className="form-label">Tên sản phẩm</label>
           <input
             type="text"
             className="form-control"
             value={form.name}
-            onChange={(e) => setForm((f: Omit<Product, "_id">) => ({ ...f, name: e.target.value }))}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
             disabled={loading}
           />
@@ -76,10 +104,9 @@ export default function ProductForm() {
           <input
             type="number"   
             className="form-control"
-            value={form.price}
-            onChange={(e) => setForm((f: Omit<Product, "_id">) => ({ ...f, price: Number(e.target.value) }))}
+            value={form.price === 0 ? "" : form.price}
+            onChange={(e) => setForm({ ...form, price: Number(e.target.value)})}
             required
-            min={0}
             disabled={loading}
           />
         </div>
@@ -88,16 +115,15 @@ export default function ProductForm() {
           <select
             className="form-select"
             value={form.category}
-            onChange={(e) => setForm((f: Omit<Product, "_id">) => ({ ...f, category: e.target.value }))}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
             required
           >
             <option value="">-- Chọn danh mục --</option>
-            <option value="category1">Home Appliances</option>
-            <option value="category2">Electronics</option>
-            <option value="category3">Clothing</option>
-            <option value="category4">Phone</option>
-            <option value="category5">Pen</option>
-            <option value="category6">Item</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="mb-3">
@@ -106,7 +132,12 @@ export default function ProductForm() {
 
             className="form-select"
             value={form.status}
-            onChange={(e) => setForm((f: Omit<Product, "_id">) => ({ ...f, status: e.target.value as "active" | "inactive" | "out_of_stock" }))}
+            onChange={(e) =>
+              setForm({    
+                ...form,
+                status: e.target.value as "active" | "inactive" | "out_of_stock"
+              })
+            }
             required
             disabled={loading}
           >

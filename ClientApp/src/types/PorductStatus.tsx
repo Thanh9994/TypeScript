@@ -1,9 +1,6 @@
 import React from 'react';
 import { FaCircle } from 'react-icons/fa';
-
-interface ProductStatusProps {
-  status?: "active" | "inactive" | "out_of_stock";
-}
+import type { ProductStatusProps } from './interface';
 
 const ProductStatus: React.FC<ProductStatusProps> = ({ status }) => {
   const getColor = () => {

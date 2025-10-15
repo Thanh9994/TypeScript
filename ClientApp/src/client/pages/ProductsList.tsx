@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
 import { http } from "../../api/http";
-import type { Product } from "../../types/product";
 import Loading from "../../shared/Components/loading";  
 import { vnd } from "../../untils/currency";             // ✅ format tiền
+import type { Product } from "../../types/interface";
 
 export default function ProductsDetail() {
   const [data, setData] = useState<Product[]>([]);
@@ -30,6 +29,12 @@ export default function ProductsDetail() {
     };
   }, []);
 
+  function Category(category: Product["category"]) {
+    if (typeof category === "string") return category;
+    if (category && typeof category === "object") return category.name;
+    return "Không xác định";
+  }
+
   if (loading) return <Loading />;
   if (err) return <div className="alert alert-danger my-3">{err}</div>;
   if (!data.length) return <div className="text-muted my-3">Chưa có sản phẩm.</div>;
@@ -44,7 +49,7 @@ export default function ProductsDetail() {
               <div className="card-body">
                 <h6 className="card-title">{p.name}</h6>
                 <p className="card-text text-primary fw-semibold">{vnd(p.price)}</p>
-                <div className="small text-muted mb-2">Danh mục: {p.category}</div>
+                <div className="small text-muted mb-2">Danh mục: {Category(p.category)}</div>
                 <Link to={`/products/${p._id}`} className="btn btn-outline-primary btn-sm">
                   Xem chi tiết
                 </Link>

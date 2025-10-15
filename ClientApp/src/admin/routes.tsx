@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import ProductForm from "./pages/ProductForm";
 import ProductsAdmin from "./pages/Products";
 import UserList from "./pages/UserList";
+import CategoryList from "./pages/category";
 
 export const adminRoutes: RouteObject = {
   path: "/admin",
@@ -14,6 +15,7 @@ export const adminRoutes: RouteObject = {
     { path: "products/new", element: <ProductForm /> },
     { path: "products/:id/edit", element: <ProductForm /> },
     { path: "users", element: <UserList /> },
+    { path: "category", element: <CategoryList /> },
 
     { path: "*", element: <h1>404 Not Found</h1> },
   ],

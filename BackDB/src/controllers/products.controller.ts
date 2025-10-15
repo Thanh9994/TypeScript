@@ -4,16 +4,16 @@ import Product from "../models/products.model";
 export const ProductController = {
   async getAll(_req: Request, res: Response, next: Function): Promise<void> {
     try {
-      const products = await Product.find();
+      const products = await Product.find().populate("category", "name");
       res.json(products);
     } catch (error) {
-      next(error);
+      next({message: "Lỗi khi lấy danh sách"});
     }
   },
 
   async getById(req: Request, res: Response, next: Function): Promise<void> {
     try {
-      const p = await Product.findById(req.params.id);
+      const p = await Product.findById(req.params.id).populate("category", "name");
       if (!p) {
         res.status(404).json({ message: "Not found" });
         return;
@@ -36,7 +36,7 @@ export const ProductController = {
   async update(req: Request, res: Response, next: Function): Promise<void> {
     try {
       const { id } = req.params;
-      const updated = await Product.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true });
+      const updated = await Product.findByIdAndUpdate(id, { ...req.body, $inc: { views: 1 } }, { new: true }).populate("category", "name");
       if (!updated) {
         res.status(404).json({ message: "Not found" });
         return;

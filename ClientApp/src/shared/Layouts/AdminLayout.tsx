@@ -5,6 +5,7 @@ import {
   UserOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  ContainerOutlined,
 } from "@ant-design/icons";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -91,6 +92,12 @@ export default function AdminLayout() {
               icon: <DashboardOutlined />,
               label: "Dashboard",
               onClick: () => navigate("/admin"),
+            },
+            {
+              key: "category",
+              icon: <ContainerOutlined />,
+              label: "Category",
+              onClick: () => navigate("/admin/category")
             },
             {
               key: "products",
