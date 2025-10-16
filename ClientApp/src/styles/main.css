@@ -1,3 +1,9 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
 /* custom nhẹ */
 .container-narrow { max-width: 980px; }
+
+.ant-table-column-sort {
+  font-weight: normal !important;
+  color: inherit !important;
+  background: none !important;
+}

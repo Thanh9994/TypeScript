@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form, Input, Button, message, Select, Card } from "antd";
+import { Form, Input, Button, message, Card } from "antd";
 import { useNavigate } from "react-router-dom";
 import { http } from "../../api/http";
 
@@ -89,11 +89,10 @@ export default function Signup() {
             <Input placeholder="0123456789" />
           </Form.Item>
          
-
-          <Form.Item
+          {/* <Form.Item
             label="Vai trò"
             name="role"
-            initialValue="user"
+            initialValue="Người dùng"
             rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
             
           > 
@@ -104,7 +103,7 @@ export default function Signup() {
                 { value: "admin", label: "Quản trị viên" },
               ]}
             />
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item>
             <Button

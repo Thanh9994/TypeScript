@@ -124,7 +124,7 @@ export default function ProductsAdmin() {
             title: "STT",
             render: (_: any, __: any, index: number) =>
               (currentPage - 1) * itemsPerPage + index + 1,
-            width: 80,
+            width: 40,
             align: "center",
           },
           { title: "Tên sản phẩm", dataIndex: "name" },
@@ -184,7 +184,7 @@ export default function ProductsAdmin() {
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 1}
         >
-          Trang trước
+          Back
         </Button>
 
         {Array.from({ length: totalPages }).map((_, i) => {
@@ -206,7 +206,7 @@ export default function ProductsAdmin() {
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
-          Trang sau
+          Next
         </Button>
       </div>
     </>

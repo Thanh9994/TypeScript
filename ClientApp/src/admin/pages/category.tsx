@@ -62,11 +62,27 @@ export default function CategoryList() {
       </Button>
 
       <Table
+        bordered
         dataSource={categories}
         rowKey="_id"
         loading={loading}
         columns={[
-          { title: "Tên danh mục", dataIndex: "name" },
+          {
+            title: "STT",
+            render: (_: any, __: any, index: number) => index + 1,
+            width: 40,
+            align: "center",
+          },
+          { title: "Tên danh mục", dataIndex: "name",
+            sorter: (a, b) => a.name.localeCompare(b.name),
+            sortDirections: ["ascend", "descend"], },
+          {
+            title: "Số sản phẩm",
+            dataIndex: "productCount",
+            sorter: (a, b) => (a.productCount ?? 0) - (b.productCount ?? 0),
+            sortDirections: ["ascend", "descend"],
+            render: (count) => count ?? 0,
+          },
           {
             title: "Trạng thái",
             dataIndex: "status",
@@ -118,7 +134,6 @@ export default function CategoryList() {
         width={650}
         okText={current ? "Cập nhật" : "Thêm"}
         cancelText="Hủy"
-        destroyOnClose={true}
       >
         <Input
           placeholder="Tên danh mục"

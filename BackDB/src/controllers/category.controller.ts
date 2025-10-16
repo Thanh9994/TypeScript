@@ -4,8 +4,34 @@ import mongoose from "mongoose";
 
 export const CategoryController ={
     async getAll(_req: Request, res: Response){
-        const categories = await Category.find().sort({ createdAt: -1 });
-        res.json(categories)
+        try{
+            const categories = await Category.aggregate([
+            {
+                $lookup: {
+                    from: "products", // ⚠️ tên collection trong MongoDB (phải đúng, viết thường, số nhiều)
+                    localField: "_id",
+                    foreignField: "category",
+                    as: "products",
+                },
+            },
+            {
+                $addFields: {
+                    productCount: { $size: "$products" },
+                },
+            },
+            {
+                $project: {
+                    products: 0,
+                },
+            },
+            { $sort: { createdAt: -1 } },
+            ]);
+            res.json(categories)
+        } catch (error) {
+            console.error("Lỗi khi lấy danh mục:", error);
+            res.status(500).json({ message: "Lỗi khi lấy danh mục" });
+        }
+       
     },
 
     async create(req: Request, res: Response){

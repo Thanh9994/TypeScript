@@ -37,63 +37,6 @@ export default function UserList() {
     // Bạn có thể thay bằng logic mở modal hoặc chuyển trang chỉnh sửa
   };
 
-  const columns = [
-    { title: "Tên người dùng", dataIndex: "username", key: "username" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Số điện thoại", dataIndex: "phone", key: "phone" },
-    {
-      title: "Vai trò",
-      dataIndex: "role",
-      key: "role",
-      render: (role: string) => {
-        switch (role) {
-          case "admin":
-            return <Tag color="red">Quản trị</Tag>;
-          case "staff":
-            return <Tag color="orange">Nhân viên</Tag>;
-          default:
-            return <Tag color="blue">Khách hàng</Tag>;
-        }
-      },
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "active",
-      key: "active",
-      render: (active: boolean) =>
-        active ? (
-          <Tag color="green">Hoạt động</Tag>
-        ) : (
-          <Tag color="gray">Tạm khóa</Tag>
-        ),
-    },
-    {
-      title: "Hành động",
-      key: "action",
-      render: (_: any, record: any) => (
-        <>
-          <Button
-            type="link"
-            onClick={() => handleUpdate(record._id)}
-            style={{ marginRight: 8 }}
-          >
-            Cập nhật
-          </Button>
-          <Popconfirm
-            title="Bạn có chắc muốn xoá người này?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Xoá"
-            cancelText="Huỷ"
-          >
-            <Button danger type="link">
-              Xoá
-            </Button>
-          </Popconfirm>
-        </>
-      ),
-    },
-  ];
-
   return (
     <>
       <h2>Danh sách người dùng</h2>
@@ -101,13 +44,74 @@ export default function UserList() {
           + Thêm người dùng
       </Button>   
         <Table
-          columns={columns}
+          bordered
           dataSource={users}
           rowKey="_id"
           loading={loading}
           pagination={{ pageSize: 5, showSizeChanger: false }}
           // tăng font size bảng
           style={{ fontSize: 16 }}
+          columns={[
+            {
+              title: "STT",
+              render: (_: any, __: any, index: number) => index + 1,
+              width: 40, align: "center",
+            },
+            { title: "Tên người dùng", dataIndex: "username", key: "username" },
+            { title: "Email", dataIndex: "email", key: "email" },
+            { title: "Số điện thoại", dataIndex: "phone", key: "phone" },
+            {
+              title: "Vai trò",
+              dataIndex: "role",
+              key: "role",
+              render: (role: string) => {
+                switch (role) {
+                  case "admin":
+                    return <Tag color="red">Quản trị</Tag>;
+                  case "staff":
+                    return <Tag color="orange">Nhân viên</Tag>;
+                  default:
+                    return <Tag color="blue">Khách hàng</Tag>;
+                }
+              },
+            },
+            {
+              title: "Trạng thái",
+              dataIndex: "active",
+              key: "active",
+              render: (active: boolean) =>
+                active ? (
+                  <Tag color="green">Hoạt động</Tag>
+                ) : (
+                  <Tag color="gray">Tạm khóa</Tag>
+                ),
+            },
+            {
+              title: "Hành động",
+              key: "action",
+              render: (_: any, record: any) => (
+                <>
+                  <Button
+                    type="link"
+                    onClick={() => handleUpdate(record._id)}
+                    style={{ marginRight: 8 }}
+                  >
+                    Cập nhật
+                  </Button>
+                  <Popconfirm
+                    title="Bạn có chắc muốn xoá người này?"
+                    onConfirm={() => handleDelete(record._id)}
+                    okText="Xoá"
+                    cancelText="Huỷ"
+                  >
+                    <Button danger type="link">
+                      Xoá
+                    </Button>
+                  </Popconfirm>
+                </>
+              ),
+            },
+          ]}
         />
     </>
   );

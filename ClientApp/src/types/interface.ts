@@ -1,6 +1,7 @@
 export interface Category {
   _id?: string;
   name: string;
+  productCount?: number;
   status: "active" | "inactive";
 }
 
