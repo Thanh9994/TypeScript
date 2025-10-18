@@ -7,10 +7,27 @@ const productSchema = new mongoose.Schema(
     category:   { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     description:{ type: String, default: "" },
     image:      { type: String, default: "" },
-    status:     { type: String, enum: ["active", "inactive", "out_of_stock"], default: "active" }
+    sizes: [{
+        size: { type: String, required: true },
+        quantity: { type: Number, required: true, min: 0, default: 0 },
+      }],
+    totalQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    status:{ type: String, enum: ["active", "inactive", "out_of_stock"], default: "active" }
   },
   { timestamps: true, versionKey: false }
 );
 
+//cập nhật số lượng tự dộng 
+productSchema.pre("save", function (next) {
+  if (this.sizes?.length) {
+    this.totalQuantity = this.sizes.reduce((sum, s) => sum + s.quantity, 0);
+  }
+  next();
+});
+
 export type ProductDoc = mongoose.InferSchemaType<typeof productSchema>;
-export default mongoose.model("Product", productSchema);
+export default mongoose.model<ProductDoc>("Product", productSchema);

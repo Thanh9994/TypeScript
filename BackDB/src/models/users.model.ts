@@ -35,8 +35,10 @@ const userSchema = new mongoose.Schema(
     },
     addresses: [
       {
-        street: String,
-        city: String,
+        label: { type: String, required: true },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        country: { type: String, default: "Việt Nam" },
         isDefault: {
           type: Boolean,
           default: false,
@@ -49,6 +51,11 @@ const userSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    // status: { 
+    //   type: String, 
+    //   enum: ["active", "inactive"], 
+    //   default: "active" 
+    // },
   },
   {
     timestamps: true, // Tự động thêm createdAt và updatedAt

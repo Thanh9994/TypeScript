@@ -1,157 +1,272 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { http } from "../../api/http";
-import { message } from "antd"
-import { productSchema, type ProductFormData } from "../../shared/Schema/auth.schema";
+import {
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Button,
+  Table,
+  Space,
+  Card,
+  message,
+  // Upload,
+} from "antd";
+// import { PlusOutlined} from "@ant-design/icons";
+// import type { UploadFile } from "antd/es/upload/interface";
 import type { Category, Product } from "../../types/interface";
 
-export default function ProductForm() {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const isEdit = Boolean(id);
-
-  const [form, setForm] = useState<ProductFormData>({
-    name: "",
-    price: 0,
-    category: "",
-    status: "active",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function ProductForm({
+  product,
+  onClose,
+}: {
+  product?: Product | null;
+  onClose?: () => void;
+}) {
+  const [form] = Form.useForm();
+  const isEdit = Boolean(product?._id);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [sizes, setSizes] = useState<{ key: number; size: string; quantity: number }[]>(
+    product?.sizes?.map((s, i) => ({ key: i, ...s })) ?? []
+  );
+  const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(product?.image ?? "");
 
+  //Lấy danh mục
   useEffect(() => {
     http.get("/categories").then((res) => setCategories(res.data));
   }, []);
 
-
+  // 🧩 Nạp dữ liệu khi chỉnh sửa
   useEffect(() => {
-    if (isEdit && id) {
-      (async() => {
-        try {
-          const res = await http.get<Product>(`/products/${id}`);
-          setForm({
-            name: res.data.name,
-            price: res.data.price,
-            category:
-            typeof res.data.category === "string"
-              ? res.data.category
-              : res.data.category._id ?? "",
-            status: res.data.status,
-          });
-        } catch (e: any) {
-          setError(e?.response?.data?.message ?? "Không thể tải sản phẩm");
-        }
-      })();
+    if (product) {
+      form.setFieldsValue({
+        name: product.name,
+        price: product.price,
+        category:
+          typeof product.category === "string"
+            ? product.category
+            : product.category?._id,
+        status: product.status,
+      });
     }
-  }, [isEdit, id]);
+  }, [product, form]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleAddSize = () => {
+    const newKey = sizes.length ? sizes[sizes.length - 1].key + 1 : 1;
+    setSizes([...sizes, { key: newKey, size: "", quantity: 0 }]);
+  };
+
+  const handleRemoveSize = (key: number) => {
+    setSizes(sizes.filter((s) => s.key !== key));
+  };
+
+  const handleChangeSize = (key: number, field: "size" | "quantity", value: any) => {
+    setSizes((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, [field]: value } : s))
+    );
+  };
+
+  const totalQuantity = sizes.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
+  // // Upload ảnh base64 (local)
+  // const getBase64 = (file: File, callback: (url: string) => void) => {
+  //   const reader = new FileReader();
+  //   reader.addEventListener("load", () => callback(reader.result as string));
+  //   reader.readAsDataURL(file);
+  // };
+
+  // const handleChangeImage = (info: any) => {
+  //   const file = info.file.originFileObj;
+  //   if (!file) return;
+  //   getBase64(file, (url) => setImageUrl(url));
+  // };
+
+  const handleSubmit = async (values: any) => {
     setLoading(true);
-    setError(null);
-
-    const result = productSchema.safeParse(form);
-    if(!result.success){
-      const firstError = result.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
-      setError(firstError);
-      setLoading(false)
-      return;
-    }
-     // Nếu cần gửi category là object, tìm object category theo id
-    const categoryObject = categories.find(cat => cat._id === result.data.category);
-
-    const payload = {
-      ...result.data,
-      category: categoryObject ?? result.data.category // nếu ko tìm thấy thì giữ nguyên
-    };
-
     try {
-      if (isEdit) {
-        await http.put(`/products/${id}`, payload);
-        message.success("Cập nhật sản phẩm thành công.");   
+      const payload = {
+        ...values,
+        image: imageUrl,
+        sizes,
+        totalQuantity,
+      };
+
+      if (isEdit && product?._id) {
+        await http.put(`/products/${product._id}`, payload);
+        message.success("Cập nhật sản phẩm thành công");
       } else {
         await http.post("/products", payload);
-        message.success("Thêm sản phẩm thành công.");
+        message.success("Thêm sản phẩm thành công");
       }
-      console.log("🧾 Dữ liệu gửi lên:", payload);
-      navigate("/admin/products");
-    } catch (e: any) {
-      setError(e?.response?.data?.message ?? "Lưu sản phẩm thất bại. Vui lòng thử lại.");
+
+      onClose?.();
+    } catch (err: any) {
+      message.error(err?.response?.data?.message ?? "Lưu sản phẩm thất bại");
     } finally {
       setLoading(false);
     }
   };
 
-  return(
-    <>
-      <h2 className="mb-3">{isEdit ? "Chỉnh sửa" : "Thêm"} sản phẩm</h2>
-      {error && <div className="alert alert-danger my-3">{error}</div>}
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="mb-3">
-          <label className="form-label">Tên sản phẩm</label>
-          <input
-            type="text"
-            className="form-control"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Giá</label>
-          <input
-            type="number"   
-            className="form-control"
-            value={form.price === 0 ? "" : form.price}
-            onChange={(e) => setForm({ ...form, price: Number(e.target.value)})}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div className="mb-3">  
-          <label className="form-label">Danh mục</label>
-          <select
-            className="form-select"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            required
-          >
-            <option value="">-- Chọn danh mục --</option>
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Trạng thái</label>
-          <select
+  return (
+    <Card
+      title={isEdit ? "🛠️ Chỉnh sửa sản phẩm" : "🆕 Thêm sản phẩm mới"}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{ status: "active" }}
+      >
+        {/* Tên sản phẩm */}
+        <Form.Item
+          name="name"
+          label="Tên sản phẩm"
+          rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
+        >
+          <Input placeholder="Nhập tên sản phẩm" />
+        </Form.Item>
 
-            className="form-select"
-            value={form.status}
-            onChange={(e) =>
-              setForm({    
-                ...form,
-                status: e.target.value as "active" | "inactive" | "out_of_stock"
-              })
+        {/* Giá */}
+        <Form.Item
+          name="price"
+          label="Giá sản phẩm"
+          rules={[{ required: true, message: "Vui lòng nhập giá sản phẩm" }]}
+        >
+          <InputNumber
+            min={0}
+            style={{ width: "100%" }}
+            placeholder="Nhập giá"
+            formatter={(value) =>
+              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
             }
-            required
-            disabled={loading}
-          >
-            <option value="">-- Chọn trạng thái --</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="out_of_stock">Out of Stock</option>
-          </select>
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Đang lưu..." : "Lưu sản phẩm"}
-        </button>
-        <button type="button" className="btn btn-secondary mx-2" onClick={() => navigate("/admin/products")}>Hủy </button>
-      </form>
-    </>
+          />
+        </Form.Item>
+
+        {/* Danh mục */}
+        <Form.Item
+          name="category"
+          label="Danh mục"
+          rules={[{ required: true, message: "Vui lòng chọn danh mục" }]}
+        >
+          <Select placeholder="Chọn danh mục">
+            {categories.map((cat) => (
+              <Select.Option key={cat._id} value={cat._id}>
+                {cat.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        {/* Trạng thái */}
+        <Form.Item
+          name="status"
+          label="Trạng thái"
+          rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
+        >
+          <Select>
+            <Select.Option value="active">🟢 Active</Select.Option>
+            <Select.Option value="inactive">🔴 Inactive</Select.Option>
+            <Select.Option value="out_of_stock">⚫ Hết hàng</Select.Option>
+          </Select>
+        </Form.Item>
+
+        {/* Bảng nhập size và số lượng */}
+        <Form.Item label="Kích cỡ & Tồn kho">
+          <Table
+            size="small"
+            pagination={false}
+            dataSource={sizes}
+            bordered
+            rowKey="key"
+            columns={[
+              {
+                title: "Size",
+                dataIndex: "size",
+                render: (_, record) => (
+                  <Input
+                    placeholder="VD: S, M, L"
+                    value={record.size}
+                    onChange={(e) =>
+                      handleChangeSize(record.key, "size", e.target.value)
+                    }
+                  />
+                ),
+              },
+              {
+                title: "Số lượng",
+                dataIndex: "quantity",
+                render: (_, record) => (
+                  <InputNumber
+                    min={0}
+                    value={record.quantity}
+                    onChange={(val) =>
+                      handleChangeSize(record.key, "quantity", val ?? 0)
+                    }
+                  />
+                ),
+              },
+              {
+                title: "Hành động",
+                render: (_, record) => (
+                  <Button danger onClick={() => handleRemoveSize(record.key)}>
+                    Xóa
+                  </Button>
+                ),
+              },
+            ]}
+            footer={() => (
+              <Space>
+                <Button type="dashed" onClick={handleAddSize}>
+                  + Thêm size
+                </Button>
+                <strong>Tổng tồn kho: {totalQuantity}</strong>
+              </Space>
+            )}
+          />
+        </Form.Item>
+        <Form.Item name="description" label="Mô tả">
+          <Input.TextArea rows={3} placeholder="Mô tả ngắn về sản phẩm" />
+        </Form.Item>
+          {/* Ảnh sản phẩm (nhập URL) */}
+        <Form.Item
+          name="image"
+          label="Ảnh sản phẩm (URL)"
+          rules={[{ required: true, message: "Vui lòng nhập URL ảnh" }]}
+        >
+          <Input
+            placeholder="Dán đường dẫn ảnh vào đây (VD: https://...)"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+          />
+        </Form.Item>
+
+        {/* Preview ảnh (nếu có URL) */}
+        {imageUrl && (
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <img
+              src={imageUrl}
+              alt="preview"
+              style={{
+                width: 180,
+                height: "auto",
+                borderRadius: 8,
+                boxShadow: "0 0 5px rgba(0,0,0,0.2)",
+              }}
+            />
+          </div>
+        )}
+
+        {/* Nút hành động */}
+        <Form.Item className="text-end mt-4">
+          <Space>
+            <Button onClick={onClose}>Hủy</Button>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              {isEdit ? "Cập nhật" : "Lưu sản phẩm"}
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Card>
   );
-};
+}

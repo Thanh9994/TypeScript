@@ -18,14 +18,16 @@ export const signupSchema = Joi.object({
     "string.empty": "Mật khẩu không được để trống",
     "any.required": "Mật khẩu là bắt buộc",
   }),
-  phone: Joi.string().pattern(/^\d{10}$/).messages({
-    "string.pattern.base": "Số điện thoại phải có đúng 10 chữ số",
+  phone: Joi.string().pattern(/^(0|\+84)(\d{9})$/).messages({
+    "string.pattern.base": "Số điện thoại không hợp lệ",
   }),
   role: Joi.string().valid("customer", "staff", "admin").default("customer"),
   addresses: Joi.array().items(
     Joi.object({
+      label: Joi.string().allow("").default("Chưa đặt tên"),
       street: Joi.string().required(),
       city: Joi.string().required(),
+      country: Joi.string().allow("").default("Việt Nam"),
       isDefault: Joi.boolean().default(false),
     })
   ),

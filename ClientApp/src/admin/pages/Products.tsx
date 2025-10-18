@@ -7,6 +7,7 @@ import ProductStatus from "../../types/PorductStatus";
 import { Table, Button, Space, message, Modal } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import type { Category, Product } from "../../types/interface";
+import ProductForm from "./ProductForm";
 
 type ContextType = {
   search: string;
@@ -21,6 +22,9 @@ export default function ProductsAdmin() {
   const [err, setErr] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   // ✅ reset trang khi search thay đổi
   useEffect(() => {
@@ -77,6 +81,7 @@ export default function ProductsAdmin() {
       okButtonProps: { danger: true },
       async onOk() {
         try {
+          message.loading({ content: "Đang xóa...", key: id });
           await http.delete(`/products/${id}`);
           setData((prev) => prev.filter((p) => p._id !== id));
           message.success("Đã xóa sản phẩm thành công");
@@ -136,12 +141,50 @@ export default function ProductsAdmin() {
             ),
           },
           {
+            title: "Kích cỡ",
+            dataIndex: "sizes",
+            render: (sizes: any[]) =>
+              sizes && sizes.length
+                ? sizes.map((s) => `${s.size} (${s.quantity})`).join(", ")
+                : "—",
+          },
+          {
+            title: "Tồn kho",
+            dataIndex: "totalQuantity",
+            render: (qty: number) => (
+              <span style={{ color: qty > 0 ? "green" : "red", fontWeight: 600 }}>
+                {qty ?? 0}
+              </span>
+            ),
+          },
+          {
             title: "Danh mục",
             dataIndex: "category",
             render: (category) => {
               if (!category) return "Không rõ";
               return category.name ?? "Không rõ";
             },
+          },
+          {
+            title: "Ảnh",
+            dataIndex: "image",
+            key: "image",
+            align: "center",
+            width: 100,
+            render: (image: string) => (
+              <img
+                src={image || "https://placehold.co/60x60?text=No+Img"}
+                alt=""
+                className="product-thumb"
+                style={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: 6,
+                  border: "1px solid #eee",
+                }}
+              />
+            ),
           },
           {
             title: "Trạng thái",
@@ -158,12 +201,16 @@ export default function ProductsAdmin() {
                 >
                   Xem
                 </Link>
-                <Link
-                  to={`/admin/products/${record._id}/edit`}
-                  className="btn btn-sm btn-warning"
+                <Button
+                  type="default"
+                  size="small"
+                  onClick={() => {
+                    setEditingProduct(record);
+                    setIsModalOpen(true);
+                  }}
                 >
                   Sửa
-                </Link>
+                </Button>
                 <Button
                   danger
                   size="small"
@@ -209,6 +256,26 @@ export default function ProductsAdmin() {
           Next
         </Button>
       </div>
+      <Modal
+        title={editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
+        open={isModalOpen}
+        footer={null}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setEditingProduct(null);
+        }}
+        width={900}
+      >
+        <ProductForm
+          product={editingProduct}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingProduct(null);
+            // reload list sau khi cập nhật
+            http.get("/products").then(res => setData(res.data));
+          }}
+        />
+      </Modal>
     </>
   );
 }

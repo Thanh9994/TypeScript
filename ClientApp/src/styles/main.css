@@ -7,3 +7,11 @@
   color: inherit !important;
   background: none !important;
 }
+
+.product-thumb {
+  transition: transform 0.2s ease;
+}
+.product-thumb:hover {
+  transform: scale(1.8);
+  z-index: 10;
+}
